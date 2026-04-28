@@ -158,8 +158,12 @@ export default function App() {
       }
 
       // Send each contact to Google Apps Script
+      const namedContacts = contacts.filter((c) => c.name && c.name.trim());
+      const skipped = contacts.length - namedContacts.length;
+      if (skipped > 0) addLog(`⏭️ Skipped ${skipped} contact(s) with no name`, "info");
+
       let successCount = 0;
-      for (const contact of contacts) {
+      for (const contact of namedContacts) {
         try {
           addLog(`📤 Sending ${contact.name} to Google Sheet...`, "info");
           await fetch(APPS_SCRIPT_URL, {
@@ -189,8 +193,8 @@ export default function App() {
         }
       }
 
-      setResults((prev) => [...contacts, ...prev]);
-      addLog(`🎉 Done! ${successCount}/${contacts.length} contacts written to Google Sheet`, "success");
+      setResults((prev) => [...namedContacts, ...prev]);
+      addLog(`🎉 Done! ${successCount}/${namedContacts.length} contacts written to Google Sheet`, "success");
       setInput("");
     } catch (err) {
       setError(err.message);
