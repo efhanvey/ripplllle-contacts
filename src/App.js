@@ -18,6 +18,30 @@ const COLUMNS = [
 
 const APPS_SCRIPT_URL = process.env.REACT_APP_APPS_SCRIPT_URL;
 const ANTHROPIC_API_KEY = process.env.REACT_APP_ANTHROPIC_API_KEY;
+const HUNTER_API_KEY = process.env.REACT_APP_HUNTER_API_KEY;
+
+const lookupEmailWithHunter = async (contact) => {
+  if (!HUNTER_API_KEY || !contact.website || !contact.name) return "";
+  const nameParts = contact.name.trim().split(/\s+/);
+  if (nameParts.length < 2) return "";
+  const firstName = nameParts[0];
+  const lastName = nameParts.slice(1).join(" ");
+  let domain;
+  try {
+    domain = new URL(contact.website).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+  try {
+    const res = await fetch(
+      `https://api.hunter.io/v2/email-finder?domain=${encodeURIComponent(domain)}&first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}&api_key=${HUNTER_API_KEY}`
+    );
+    const data = await res.json();
+    return data?.data?.email || "";
+  } catch {
+    return "";
+  }
+};
 
 const SYSTEM_PROMPT = `You are a higher education research assistant. When given a US college or university name or website, find real contacts who have the words "Career", "Alumni", or "Student" in their job title, specifically in these departments: Career Services, Student Life, and Alumni Relations.
 
@@ -97,13 +121,31 @@ export default function App() {
 
       let contacts;
       try {
-        const cleaned = textBlock.text.replace(/```json|```/g, "").trim();
+        let cleaned = textBlock.text;
+        const jsonMatch = cleaned.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          cleaned = jsonMatch[0];
+        }
         contacts = JSON.parse(cleaned);
       } catch {
         throw new Error("Could not parse Claude response as JSON");
       }
 
       addLog(`✅ Found ${contacts.length} contact(s)`, "success");
+
+      // Hunter.io email lookup
+      if (HUNTER_API_KEY) {
+        for (const contact of contacts) {
+          addLog(`🔎 Hunter.io lookup for ${contact.name}...`, "info");
+          const hunterEmail = await lookupEmailWithHunter(contact);
+          if (hunterEmail) {
+            contact.email = hunterEmail;
+            addLog(`📧 Hunter found: ${hunterEmail}`, "success");
+          } else {
+            addLog(`— No Hunter email found for ${contact.name}`, "info");
+          }
+        }
+      }
 
       // Send each contact to Google Apps Script
       let successCount = 0;
