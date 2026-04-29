@@ -70,7 +70,7 @@ For each contact found, return a JSON array. Each object must have exactly these
 - tools: Known platforms or tools they use for student engagement, career services, or alumni engagement (e.g. Handshake, Salesforce, EverTrue, Graduway, etc.)
 - undergrad_population: Approximate undergraduate student count as a number only
 
-Return ONLY a valid JSON array, no markdown, no explanation. Return between 1-10 contacts per school.`;
+Return ONLY a valid JSON array, no markdown, no explanation. Return between 2-5 contacts per school.`;
 
 export default function App() {
   const [input, setInput] = useState("");
