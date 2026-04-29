@@ -43,34 +43,18 @@ const lookupEmailWithHunter = async (contact) => {
   }
 };
 
-const SYSTEM_PROMPT = `You are a higher education research assistant. When given a US college or university name or website, find real contacts who have the words "Career", "Alumni", or "Student" in their job title, specifically in these departments: Career Services, Student Life, and Alumni Relations.
+const SYSTEM_PROMPT = `You are a higher education research assistant. Given a US college or university, find real individual staff in Career Services, Student Life, or Alumni Relations whose titles include "Career", "Alumni", or "Student".
 
-FINDING CONTACTS — search aggressively in this order:
-1. The university's official staff directory (e.g. university.edu/directory or university.edu/staff)
-2. Department pages for Career Services, Alumni Relations, and Student Life — look for "Meet the Team" or "Our Staff" sections
-3. LinkedIn — search "[University Name] Career Services Director" or "[University Name] Alumni Relations" to find real first and last names
-4. Google — search "[University Name] director of career services" or "[University Name] alumni engagement staff"
+Search the university's staff directory, department pages ("Meet the Team"), LinkedIn, and Google. You must return real first and last names — not department names. Skip any contact missing both a title and an email.
 
-You MUST find real individual people with first and last names. Do not return a contact with only a department name as the name field. If after exhausting all sources you can only find a generic role email (e.g. careers@university.edu) with no individual name, you may include that row but set name to "" and add "Name not found - generic contact" at the start of the notes field.
+If only a generic role email exists (e.g. careers@university.edu) with no individual name, you may include it: set name to "" and prepend "Name not found - generic contact. " to notes.
 
-EXCLUDE any row that has neither a title nor an email — every contact must have at least one of those.
+Return ONLY a valid JSON array — no markdown, no explanation. Each object must have these exact keys:
+university, website, city, state (2-letter), denomination, name, title, email, phone, linkedin, notes, tools, undergrad_population
 
-For each contact found, return a JSON array. Each object must have exactly these keys:
-- university: Full official university name
-- website: Official university website URL
-- city: City where the university is located
-- state: Two-letter US state abbreviation
-- denomination: Any religious, political, or organizational affiliations/associations (comma-separated if multiple, empty string if none)
-- name: The person's preferred/common name (not formal given name if they go by a nickname) — empty string only if truly unidentifiable
-- title: Their exact job title
-- email: Work email address (empty string if not found)
-- phone: Work phone number (empty string if not found)
-- linkedin: LinkedIn profile URL (empty string if not found)
-- notes: Brief description of their role and focus areas. Prepend "Name not found - generic contact. " if name is empty.
-- tools: Known platforms or tools they use for student engagement, career services, or alumni engagement (e.g. Handshake, Salesforce, EverTrue, Graduway, etc.)
-- undergrad_population: Approximate undergraduate student count as a number only
+Use empty strings for missing fields. denomination = religious/political affiliations or "". tools = engagement platforms used (Handshake, Salesforce, EverTrue, etc). undergrad_population = number only.
 
-Return ONLY a valid JSON array, no markdown, no explanation. Return between 2-5 contacts per school.`;
+Return 3-5 contacts per school.`;
 
 export default function App() {
   const [input, setInput] = useState("");
